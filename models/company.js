@@ -55,20 +55,20 @@ class Company {
       whereExpression.push(`num_employees >= $${vals.length}`);
     }
     if (maxEmployees !== undefined) {
-      whereExpression.push(`num_employees <= $${vals.length}`);
       vals.push(maxEmployees);
+      whereExpression.push(`num_employees <= $${vals.length}`);
     }
     if (nameLike !== undefined) {
-      whereExpression.push(`name ILIKE $${vals.length}`);
       vals.push(`%${nameLike}%`);
+      whereExpression.push(`name ILIKE $${vals.length}`);
     }
 
     // if filtering parameters were given add WHERE clause and expressions, joined by AND 
     if (whereExpression.length > 0) {
-      query += "WHERE" + whereExpression.join("AND");
+      query += " WHERE " + whereExpression.join(" AND ");
     }
     // finish the query by ordering by name and execute it 
-    query += "ORDER BY name";
+    query += " ORDER BY name";
     const companyRes = await db.query(query, vals);
     return companyRes.rows;
   }
