@@ -69,8 +69,10 @@ class Company {
     }
     // finish the query by ordering by name and execute it 
     query += " ORDER BY name";
-    const companyRes = await db.query(query, vals);
-    return companyRes.rows;
+    const companies = await db.query(query, vals);
+    if (companies.rows.length ===0) throw new NotFoundError(`No companies found.`);
+
+    return companies.rows;
   }
 
   /** Given a company handle, return data about company.

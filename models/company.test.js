@@ -175,9 +175,13 @@ describe("findAll", function () {
     ]);
   });
 
-  test("Returns empty array when there are no matches", async () => {
-    let companies = await Company.findAll({ nameLike: "fakeCompany" });
-    expect(companies).toEqual([]);
+  test("not found error when there are no matches", async () => {
+    try {
+      await Company.findAll({ nameLike: "fakeCompany" });
+      fail();
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
   });
 });
 

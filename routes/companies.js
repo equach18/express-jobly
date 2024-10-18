@@ -53,6 +53,13 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   try {
     const { nameLike, minEmployees, maxEmployees } = req.query;
+    // validate that minEmployees and maxEmployees must be numbers 
+    if (minEmployees !== undefined && isNaN(minEmployees)) {
+      throw new BadRequestError("minEmployees must be a number.");
+    }
+    if (maxEmployees !== undefined && isNaN(maxEmployees)) {
+      throw new BadRequestError("maxEmployees must be a number.");
+    }
     // Validate that the minEmployees cannot be greater than the maxEmployees if both parameters are given
     if (minEmployees !== undefined && maxEmployees !== undefined && +minEmployees > +maxEmployees){
       throw new ExpressError("minEmployees must have a value less than maxEmployees.", 400)
