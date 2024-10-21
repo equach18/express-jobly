@@ -4,6 +4,8 @@ const request = require("supertest");
 
 const db = require("../db");
 const app = require("../app");
+const { createToken } = require("../helpers/tokens");
+
 
 const {
   commonBeforeAll,
@@ -29,36 +31,46 @@ describe("POST /companies", function () {
     numEmployees: 10,
   };
 
-  test("ok for users", async function () {
+  test("works for admin", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .post("/companies")
       .send(newCompany)
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(201);
     expect(resp.body).toEqual({
       company: newCompany,
     });
   });
+  test("Authorization error when not admin", async function () {
+    const resp = await request(app)
+      .post("/companies")
+      .send(newCompany)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
 
   test("bad request with missing data", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .post("/companies")
       .send({
         handle: "new",
         numEmployees: 10,
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 
   test("bad request with invalid data", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .post("/companies")
       .send({
         ...newCompany,
         logoUrl: "not-a-url",
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 });
@@ -264,13 +276,14 @@ describe("GET /companies/:handle", function () {
 /************************************** PATCH /companies/:handle */
 
 describe("PATCH /companies/:handle", function () {
-  test("works for users", async function () {
+  test("works for admin", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .patch(`/companies/c1`)
       .send({
         name: "C1-new",
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.body).toEqual({
       company: {
         handle: "c1",
@@ -281,6 +294,15 @@ describe("PATCH /companies/:handle", function () {
       },
     });
   });
+  test("Auth error for users not admin", async function () {
+    const resp = await request(app)
+      .patch(`/companies/c1`)
+      .send({
+        name: "C1-new",
+      })
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401)
+  });
 
   test("unauth for anon", async function () {
     const resp = await request(app).patch(`/companies/c1`).send({
@@ -290,32 +312,35 @@ describe("PATCH /companies/:handle", function () {
   });
 
   test("not found on no such company", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .patch(`/companies/nope`)
       .send({
         name: "new nope",
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(404);
   });
 
   test("bad request on handle change attempt", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .patch(`/companies/c1`)
       .send({
         handle: "c1-new",
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 
   test("bad request on invalid data", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .patch(`/companies/c1`)
       .send({
         logoUrl: "not-a-url",
       })
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 });
@@ -323,11 +348,19 @@ describe("PATCH /companies/:handle", function () {
 /************************************** DELETE /companies/:handle */
 
 describe("DELETE /companies/:handle", function () {
-  test("works for users", async function () {
+  test("works for admins", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
+    const resp = await request(app)
+      .delete(`/companies/c1`)
+      .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.body).toEqual({ deleted: "c1" });
+  });
+
+  test("auth error for users not admin", async function () {
     const resp = await request(app)
       .delete(`/companies/c1`)
       .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.body).toEqual({ deleted: "c1" });
+    expect(resp.statusCode).toEqual(401);
   });
 
   test("unauth for anon", async function () {
@@ -336,9 +369,10 @@ describe("DELETE /companies/:handle", function () {
   });
 
   test("not found for no such company", async function () {
+    const u2Token = createToken({ username: "u2", isAdmin: true });
     const resp = await request(app)
       .delete(`/companies/nope`)
-      .set("authorization", `Bearer ${u1Token}`);
+      .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(404);
   });
 });
