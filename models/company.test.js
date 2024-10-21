@@ -194,6 +194,7 @@ describe("get", function () {
       handle: "c1",
       name: "C1",
       description: "Desc1",
+      jobs: [],
       numEmployees: 1,
       logoUrl: "http://c1.img",
     });

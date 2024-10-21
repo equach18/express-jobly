@@ -44,12 +44,12 @@ class Company {
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
   static async findAll({ nameLike, minEmployees, maxEmployees } = {}) {
-    // initialize the query string 
+    // initialize the query string
     let query = `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies `;
     let whereExpression = [];
     let vals = [];
 
-    // add filtering conditions if provided in the parameters 
+    // add filtering conditions if provided in the parameters
     if (minEmployees !== undefined) {
       vals.push(minEmployees);
       whereExpression.push(`num_employees >= $${vals.length}`);
@@ -63,14 +63,15 @@ class Company {
       whereExpression.push(`name ILIKE $${vals.length}`);
     }
 
-    // if filtering parameters were given add WHERE clause and expressions, joined by AND 
+    // if filtering parameters were given add WHERE clause and expressions, joined by AND
     if (whereExpression.length > 0) {
       query += " WHERE " + whereExpression.join(" AND ");
     }
-    // finish the query by ordering by name and execute it 
+    // finish the query by ordering by name and execute it
     query += " ORDER BY name";
     const companies = await db.query(query, vals);
-    if (companies.rows.length ===0) throw new NotFoundError(`No companies found.`);
+    if (companies.rows.length === 0)
+      throw new NotFoundError(`No companies found.`);
 
     return companies.rows;
   }
@@ -98,6 +99,16 @@ class Company {
     const company = companyRes.rows[0];
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+
+    const jobsRes = await db.query(
+      `SELECT id, title, salary, equity
+       FROM jobs
+       WHERE company_handle = $1
+       ORDER BY id`,
+      [handle]
+    );
+
+    company.jobs = jobsRes.rows;
 
     return company;
   }
