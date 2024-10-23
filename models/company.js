@@ -49,6 +49,9 @@ class Company {
     let whereExpression = [];
     let vals = [];
 
+    if (minEmployees > maxEmployees) {
+      throw new BadRequestError("minEmployees must be less than or equal to maxEmployees");
+    }
     // add filtering conditions if provided in the parameters
     if (minEmployees !== undefined) {
       vals.push(minEmployees);

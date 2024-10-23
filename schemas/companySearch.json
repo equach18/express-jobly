@@ -3,37 +3,36 @@
     "$id": "http://example.com/example.json",
     "title": "Root Schema",
     "type": "object",
+    "default": {},
+    "required": [],
     "properties": {
-        "title": {
-            "title": "The title Schema",
+        "nameLike": {
+            "title": "The nameLike Schema",
             "type": "string",
             "examples": [
-                "New"
+                "c"
             ]
         },
-        "salary": {
-            "title": "The salary Schema",
+        "minEmployees": {
+            "title": "The minEmployees Schema",
             "type": "integer",
             "minimum": 0,
             "examples": [
-                3785634
+                2
             ]
         },
-        "equity": {
-            "title": "The equity Schema",
-            "type": "number",
+        "maxEmployees": {
+            "title": "The maxEmployees Schema",
+            "type": "integer",
             "minimum": 0,
-            "maximum": 1,
             "examples": [
-                0.01
+                3
             ]
         }
     },
-    "examples": [
-        {
-            "title": "New",
-            "salary": 3785634,
-            "equity": 0.01
-        }
-    ]
+    "examples": [{
+        "nameLike": "c",
+        "minEmployees": 2,
+        "maxEmployees": 3
+    }]
 }

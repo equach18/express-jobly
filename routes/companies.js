@@ -11,6 +11,7 @@ const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
+const companySearchSchema = require("../schemas/companySearch.json");
 
 const router = new express.Router();
 
@@ -51,23 +52,18 @@ router.post("/", ensureAdmin, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
+  const filters = req.query;
+  // convert to a number if not undefined 
+  if (filters.minEmployees !== undefined) filters.minEmployees = +filters.minEmployees
+  if (filters.maxEmployees !== undefined) filters.maxEmployees = +filters.maxEmployees
+
   try {
-    const { nameLike, minEmployees, maxEmployees } = req.query;
-    // validate that minEmployees and maxEmployees must be numbers 
-    if (minEmployees !== undefined && isNaN(minEmployees)) {
-      throw new BadRequestError("minEmployees must be a number.");
+    const validator = jsonschema.validate(filters, companySearchSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
     }
-    if (maxEmployees !== undefined && isNaN(maxEmployees)) {
-      throw new BadRequestError("maxEmployees must be a number.");
-    }
-    // Validate that the minEmployees cannot be greater than the maxEmployees if both parameters are given
-    if (minEmployees !== undefined && maxEmployees !== undefined && +minEmployees > +maxEmployees){
-      throw new ExpressError("minEmployees must have a value less than maxEmployees.", 400)
-    }
-    const companies = await Company.findAll({
-      nameLike: nameLike? nameLike : undefined,
-      minEmployees: minEmployees ? +minEmployees : undefined,
-      maxEmployees: maxEmployees ? +maxEmployees : undefined,});
+    const companies = await Company.findAll(filters);
     return res.json({ companies });
   } catch (err) {
     return next(err);

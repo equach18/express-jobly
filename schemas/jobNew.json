@@ -35,6 +35,7 @@
         "companyHandle": {
             "title": "The companyHandle Schema",
             "type": "string",
+            "maxLength": 25,
             "examples": [
                 "c1"
             ]

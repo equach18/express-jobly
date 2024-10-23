@@ -7,129 +7,123 @@ const express = require("express");
 
 const { BadRequestError, ExpressError } = require("../expressError");
 const { ensureAdmin } = require("../middleware/auth");
-const job = require("../models/job");
+const Job = require("../models/job");
 
-const companyNewSchema = require("../schemas/companyNew.json");
-const companyUpdateSchema = require("../schemas/companyUpdate.json");
+const jobNewSchema = require("../schemas/jobNew.json");
+const jobUpdateSchema = require("../schemas/jobUpdate.json");
 
 const router = new express.Router();
 
-
-/** POST / { company } =>  { company }
+/** POST / { job } =>  { job }
  *
  * company should be { handle, name, description, numEmployees, logoUrl }
  *
- * Returns { handle, name, description, numEmployees, logoUrl }
+ * data should be { title, salary, equity, companyHandle }
  *
- * Authorization required: admin only 
+ * Authorization required: admin only
  */
 
 router.post("/", ensureAdmin, async function (req, res, next) {
   try {
-    const validator = jsonschema.validate(req.body, companyNewSchema);
+    const validator = jsonschema.validate(req.body, jobNewSchema);
     if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
+      const errs = validator.errors.map((e) => e.stack);
       throw new BadRequestError(errs);
     }
 
-    const company = await Company.create(req.body);
-    return res.status(201).json({ company });
+    const job = await Job.create(req.body);
+    return res.status(201).json({ job });
   } catch (err) {
     return next(err);
   }
 });
 
 /** GET /  =>
- *   { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] }
+ *   [{ id, title, salary, equity, companyHandle, companyName }, ...]
  *
  * Can filter on provided search filters:
- * - minEmployees
- * - maxEmployees
- * - nameLike (will find case-insensitive, partial matches)
+ * - minSalary
+ * - hasEquity
+ * - title
  *
  * Authorization required: none
  */
 
 router.get("/", async function (req, res, next) {
+  const filters = req.query;
+  // convert to a number
+  if (filters.minSalary !== undefined) filters.minSalary = +filters.minSalary;
+  // convert to boolean
+  if(filters.hasEquity && filters.hasEquity === "true") filters.hasEquity = true;
+  if(filters.hasEquity && filters.hasEquity === "false") filters.hasEquity = false;
   try {
-    const { nameLike, minEmployees, maxEmployees } = req.query;
-    // validate that minEmployees and maxEmployees must be numbers 
-    if (minEmployees !== undefined && isNaN(minEmployees)) {
-      throw new BadRequestError("minEmployees must be a number.");
-    }
-    if (maxEmployees !== undefined && isNaN(maxEmployees)) {
-      throw new BadRequestError("maxEmployees must be a number.");
-    }
-    // Validate that the minEmployees cannot be greater than the maxEmployees if both parameters are given
-    if (minEmployees !== undefined && maxEmployees !== undefined && +minEmployees > +maxEmployees){
-      throw new ExpressError("minEmployees must have a value less than maxEmployees.", 400)
-    }
-    const companies = await Company.findAll({
-      nameLike: nameLike? nameLike : undefined,
-      minEmployees: minEmployees ? +minEmployees : undefined,
-      maxEmployees: maxEmployees ? +maxEmployees : undefined,});
-    return res.json({ companies });
-  } catch (err) {
-    return next(err);
-  }
-});
-
-/** GET /[handle]  =>  { company }
- *
- *  Company is { handle, name, description, numEmployees, logoUrl, jobs }
- *   where jobs is [{ id, title, salary, equity }, ...]
- *
- * Authorization required: none
- */
-
-router.get("/:handle", async function (req, res, next) {
-  try {
-    const company = await Company.get(req.params.handle);
-    return res.json({ company });
-  } catch (err) {
-    return next(err);
-  }
-});
-
-/** PATCH /[handle] { fld1, fld2, ... } => { company }
- *
- * Patches company data.
- *
- * fields can be: { name, description, numEmployees, logo_url }
- *
- * Returns { handle, name, description, numEmployees, logo_url }
- *
- * Authorization required: admin only
- */
-
-router.patch("/:handle", ensureAdmin, async function (req, res, next) {
-  try {
-    const validator = jsonschema.validate(req.body, companyUpdateSchema);
+    const validator = jsonschema.validate(filters, jobSearchSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
       throw new BadRequestError(errs);
     }
-
-    const company = await Company.update(req.params.handle, req.body);
-    return res.json({ company });
+    const jobs = await Job.findAll(filters);
+    return res.json({ jobs });
   } catch (err) {
     return next(err);
   }
 });
 
-/** DELETE /[handle]  =>  { deleted: handle }
+/** GET /[id]  =>  { job }
  *
- * Authorization: admin only 
+ * Returns { id, title, salary, equity, company }
+ *   where company is { handle, name, description, numEmployees, logoUrl }
+ *
+ * Authorization required: none
  */
 
-router.delete("/:handle", ensureAdmin, async function (req, res, next) {
+router.get("/:id", async function (req, res, next) {
   try {
-    await Company.remove(req.params.handle);
-    return res.json({ deleted: req.params.handle });
+    const job = await Job.get(req.params.id);
+    return res.json({ job });
   } catch (err) {
     return next(err);
   }
 });
 
+/** PATCH /[id] { fld1, fld2, ... } => { job }
+ *
+ * Patches job data.
+ *
+ * fields can be: { title, salary, equity }
+ *
+ * Returns { id, title, salary, equity, companyHandle }
+ *
+ * Authorization required: admin only
+ */
+
+router.patch("/:id", ensureAdmin, async function (req, res, next) {
+  try {
+    const validator = jsonschema.validate(req.body, jobUpdateSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errs);
+    }
+
+    const job = await Job.update(req.params.id, req.body);
+    return res.json({ job });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** DELETE /[handle]  =>  { deleted: id }
+ *
+ * Authorization: admin only
+ */
+
+router.delete("/:id", ensureAdmin, async function (req, res, next) {
+  try {
+    await Job.remove(req.params.id);
+    return res.json({ deleted: +req.params.id });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 module.exports = router;
