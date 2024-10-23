@@ -19,7 +19,7 @@ class Job {
     const result = await db.query(
       `INSERT INTO jobs
            (title, salary, equity, company_handle)
-           VALUES ($1, $2, $3, $4, $5)
+           VALUES ($1, $2, $3, $4)
            RETURNING title, salary, equity, company_handle AS "companyHandle"`,
         [title, salary, equity, companyHandle]
     );
@@ -36,7 +36,7 @@ class Job {
    * */
   static async findAll({ minSalary, hasEquity, title } = {}) {
     // initialize the query string
-    let query = `SELECT j.id, j.title, j.salary, j.equity, j.company_handle AS "companyHandle", c.company_name AS "companyName" 
+    let query = `SELECT j.id, j.title, j.salary, j.equity, j.company_handle AS "companyHandle", c.name AS "companyName" 
                 FROM jobs j
                 LEFT JOIN companies AS c ON c.handle = j.company_handle  `;
     let whereExpression = [];
@@ -48,7 +48,6 @@ class Job {
       whereExpression.push(`j.salary >= $${vals.length}`);
     }
     if (hasEquity === true) {
-      vals.push(hasEquity);
       whereExpression.push(`j.equity > 0`);
     }
     if (title !== undefined) {
@@ -71,7 +70,7 @@ class Job {
   /** Given a job id, return data about that job.
    *
    * Returns { id, title, salary, equity, company }
-   *   where company is [{ handle, name, description, numEmployees, logoUrl }, ...]
+   *   where company is { handle, name, description, numEmployees, logoUrl }
    *
    * Throws NotFoundError if not found.
    **/

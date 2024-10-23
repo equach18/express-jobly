@@ -194,7 +194,12 @@ describe("get", function () {
       handle: "c1",
       name: "C1",
       description: "Desc1",
-      jobs: [],
+      jobs: [{
+        equity: "0",
+        id: expect.any(Number),
+        salary: 100000,
+        title: "j1"
+      }],
       numEmployees: 1,
       logoUrl: "http://c1.img",
     });
