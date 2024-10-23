@@ -30,7 +30,7 @@ describe("create", function () {
     expect(job).toEqual(newJob);
 
     const result = await db.query(
-      `SELECT title, salary, equity, company_handle
+      `SELECT title, salary, equity, company_handle 
            FROM jobs
            WHERE title = 'new'`
     );
