@@ -11,14 +11,13 @@ const Job = require("../models/job");
 
 const jobNewSchema = require("../schemas/jobNew.json");
 const jobUpdateSchema = require("../schemas/jobUpdate.json");
+const jobSearchSchema = require("../schemas/jobSearch.json");
 
 const router = new express.Router();
 
 /** POST / { job } =>  { job }
  *
- * company should be { handle, name, description, numEmployees, logoUrl }
- *
- * data should be { title, salary, equity, companyHandle }
+ * job should be { title, salary, equity, companyHandle }
  *
  * Authorization required: admin only
  */

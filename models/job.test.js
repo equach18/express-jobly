@@ -27,15 +27,22 @@ describe("create", function () {
       companyHandle: "c1",
     };
     let job = await Job.create(newJob);
-    expect(job).toEqual(newJob);
+    expect(job).toEqual({
+      id: expect.any(Number),
+      title: "new",
+      salary: 34534,
+      equity: "0",
+      companyHandle: "c1",
+    });
 
     const result = await db.query(
-      `SELECT title, salary, equity, company_handle 
+      `SELECT id, title, salary, equity, company_handle 
            FROM jobs
            WHERE title = 'new'`
     );
     expect(result.rows).toEqual([
       {
+        id: expect.any(Number),
         title: "new",
         salary: 34534,
         equity: "0",
@@ -51,15 +58,22 @@ describe("create", function () {
       companyHandle: "c1",
     };
     let job = await Job.create(newJob);
-    expect(job).toEqual(newJob);
+    expect(job).toEqual({
+      id: expect.any(Number),
+      title: "new",
+      salary: null,
+      equity: null,
+      companyHandle: "c1",
+    });
 
     const result = await db.query(
-      `SELECT title, salary, equity, company_handle
+      `SELECT id, title, salary, equity, company_handle
            FROM jobs
            WHERE title = 'new'`
     );
     expect(result.rows).toEqual([
       {
+        id: expect.any(Number),
         title: "new",
         salary: null,
         equity: null,
@@ -341,9 +355,9 @@ describe("update", function () {
 describe("remove", function () {
   test("works", async function () {
     await Job.remove(jobIds[0]);
-    const res = await db.query(
-      "SELECT handle FROM companies WHERE handle=$1", [jobIds[0]]
-    );
+    const res = await db.query("SELECT handle FROM companies WHERE handle=$1", [
+      jobIds[0],
+    ]);
     expect(res.rows.length).toEqual(0);
   });
 
